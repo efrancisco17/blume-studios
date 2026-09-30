@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://blume-studios-production.up.railway.app';
+
 const STATUS_COLORS = {
   New: 'badge-new', Replied: 'badge-replied', Consult: 'badge-consult',
   Proposal: 'badge-proposal', Booked: 'badge-booked', Lost: 'badge-lost',
@@ -24,7 +26,7 @@ export default function Dashboard() {
   const [runResult, setRunResult] = useState(null);
 
   useEffect(() => {
-    fetch('/api/reports/dashboard')
+    fetch(`${API_URL}/api/reports/dashboard`)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
@@ -34,11 +36,10 @@ export default function Dashboard() {
     setRunning(true);
     setRunResult(null);
     try {
-      const r = await fetch('/api/scheduler/run-daily', { method: 'POST' });
+      const r = await fetch(`${API_URL}/api/scheduler/run-daily`, { method: 'POST' });
       const d = await r.json();
       setRunResult(d);
-      // Refresh stats
-      const stats = await fetch('/api/reports/dashboard').then(r => r.json());
+      const stats = await fetch(`${API_URL}/api/reports/dashboard`).then(r => r.json());
       setData(stats);
     } catch (err) {
       setRunResult({ error: err.message });
@@ -83,7 +84,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard label="Total Leads" value={stats.totalLeads} href="/leads" />
         <StatCard label="Booked" value={stats.bookedLeads} sub="this year" href="/leads" />
@@ -93,7 +93,6 @@ export default function Dashboard() {
         <StatCard label="Stale Leads" value={stats.staleLeads} sub="3+ days" href="/leads" />
       </div>
 
-      {/* Morning summary */}
       {morningsummary && (
         <div className="card border-l-4 border-l-gray-400">
           <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Morning Summary</p>
@@ -103,7 +102,6 @@ export default function Dashboard() {
       )}
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Pipeline */}
         <div className="card">
           <h3 className="font-serif text-xl mb-4">Pipeline</h3>
           <div className="space-y-2">
@@ -128,7 +126,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent activity */}
         <div className="card">
           <h3 className="font-serif text-xl mb-4">Recent Activity</h3>
           <div className="space-y-2">
@@ -145,7 +142,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent leads */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-serif text-xl">Recent Leads</h3>
