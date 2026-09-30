@@ -1,0 +1,82 @@
+BLUME STUDIOS WEDDING BOOKING AGENT
+Quick Start (5 minutes)
+
+1. INSTALL
+   cd backend && npm install
+   cd ../frontend && npm install
+
+2. CONFIGURE (.env)
+   cp .env.example .env
+   Edit .env and add:
+   - ANTHROPIC_API_KEY (from console.anthropic.com)
+   - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (from Google Cloud)
+   - GOOGLE_PLACES_API_KEY (from Google Cloud)
+   - GMAIL_ADDRESS (your Gmail)
+
+3. RUN
+   Terminal 1: cd backend && npm start
+   Terminal 2: cd frontend && npm run dev
+   App opens at http://localhost:5173
+
+4. CONNECT GMAIL
+   Settings → Integrations → Connect Gmail
+   (First time only)
+
+5. TEST
+   Go to Inquiry tab
+   Paste: "Hi! I'm Alex, marrying on June 14 at The Estate. Found you on Instagram. 8 hours?"
+   Click "Process Inquiry"
+   See extracted data and draft reply
+   Go to Queue, click Approve
+   Draft appears in Gmail
+
+DOCS
+- README.md — Full features
+- SETUP.md — Google Cloud setup step-by-step
+- ARCHITECTURE.md — Technical details
+- BUILD_NOTES.md — Design decisions
+
+API RUNS ON: http://localhost:3001
+UI RUNS ON:  http://localhost:5173
+DATABASE:    blume_studios.db (created automatically)
+
+COMMON ISSUES
+"ANTHROPIC_API_KEY not set" → Add to .env, restart backend
+"Google OAuth credentials not configured" → Add credentials to .env, restart
+"Calendar checks show unknown" → Settings → Connect Gmail
+"Gmail drafts not creating" → Same as above
+"Places search fails" → Check GOOGLE_PLACES_API_KEY in .env
+
+FILE STRUCTURE
+backend/
+  - server.js (entry point)
+  - database.js (schema)
+  - services/ (claude, gmail, calendar, places)
+  - routes/ (8 route files)
+frontend/
+  - src/ (React components and pages)
+  - vite.config.js
+  - tailwind.config.js
+blume_studios.db (SQLite, created on first run)
+.env (YOUR SECRETS — never commit)
+
+NEXT STEPS
+1. Test Phase 1: Inquiry Responder (paste inquiry)
+2. Test Phase 2: Prospecting (search venues)
+3. Test Phase 3: Approval Queue (review drafts)
+4. Test Phase 4: Scheduler (run daily routine)
+5. Test Phase 5: Content (generate venue page)
+
+IMPORTANT
+⚠ Nothing is ever sent without approval
+⚠ Every email goes to Gmail as a draft first
+⚠ You must review and send manually from Gmail
+⚠ The app logs everything for compliance
+
+HELP
+Check terminal output for errors
+Look at browser console (F12) for frontend issues
+Read SETUP.md for Google Cloud configuration
+Read ARCHITECTURE.md for technical questions
+
+Good luck! 🌸

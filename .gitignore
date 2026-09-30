@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.vscode/
+.idea/
+dist/
+build/
+blume_studios.db
+blume_studios.db-*
+*.swp
+*.swo
