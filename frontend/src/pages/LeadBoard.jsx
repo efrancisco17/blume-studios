@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchAPI } from '../api';
 
 const STATUSES = ['New', 'Replied', 'Consult', 'Proposal', 'Booked', 'Lost'];
 const STATUS_COLORS = {
@@ -21,21 +22,21 @@ function LeadModal({ lead, onClose, onSave, onDelete }) {
     setSaving(true);
     const method = form.id ? 'PATCH' : 'POST';
     const url = form.id ? `/api/leads/${form.id}` : '/api/leads';
-    const res = await fetch(url, {
+    const res = await fetchAPI(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
-    const data = await res.json();
+    const data = res;
     setSaving(false);
-    if (res.ok) onSave(data);
+    if (res) onSave(data);
   }
 
   async function draftReply() {
     if (!form.id) return;
     setDrafting(true);
-    const res = await fetch(`/api/leads/${form.id}/draft-reply`, { method: 'POST' });
-    const data = await res.json();
+    const res = await fetchAPI(`/api/leads/${form.id}/draft-reply`, { method: 'POST' });
+    const data = res;
     setDrafting(false);
     setDraftResult(data);
   }
@@ -129,8 +130,7 @@ export default function LeadBoard() {
   }, []);
 
   async function loadLeads() {
-    const r = await fetch('/api/leads');
-    const d = await r.json();
+    const d = await fetchAPI('/api/leads');
     setLeads(d);
     setLoading(false);
   }
@@ -146,118 +146,9 @@ export default function LeadBoard() {
 
   async function handleDelete(id) {
     if (!confirm('Delete this lead?')) return;
-    await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+    await fetchAPI(`/api/leads/${id}`, { method: 'DELETE' });
     setLeads(prev => prev.filter(l => l.id !== id));
     setModal(null);
   }
 
-  async function draftFollowUps() {
-    setDraftingAll(true);
-    const r = await fetch('/api/leads/stale/draft-followups', { method: 'POST' });
-    const d = await r.json();
-    setDraftingAll(false);
-    alert(`${d.drafted} follow-up drafts created. Check the Approval Queue.`);
-  }
-
-  const staleCount = leads.filter(l =>
-    !['Booked', 'Lost'].includes(l.status) &&
-    (!l.last_contact_date || (Date.now() - new Date(l.last_contact_date).getTime()) / 86400000 >= 3)
-  ).length;
-
-  if (loading) return <div className="text-stone-400 text-sm">Loading…</div>;
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="font-serif text-4xl">Lead Pipeline</h2>
-          <p className="text-stone-500 text-sm mt-1">{leads.length} leads total</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {staleCount > 0 && (
-            <button onClick={draftFollowUps} disabled={draftingAll} className="btn-secondary text-amber-600">
-              {draftingAll ? 'Drafting…' : `⚡ Draft Follow-ups (${staleCount} stale)`}
-            </button>
-          )}
-          <div className="flex rounded-lg border border-stone-200 dark:border-stone-700 overflow-hidden">
-            <button onClick={() => setView('board')} className={`px-3 py-2 text-sm ${view === 'board' ? 'bg-blume-600 text-white' : 'hover:bg-stone-100'}`}>Board</button>
-            <button onClick={() => setView('table')} className={`px-3 py-2 text-sm ${view === 'table' ? 'bg-blume-600 text-white' : 'hover:bg-stone-100'}`}>Table</button>
-          </div>
-          <button onClick={() => setModal('new')} className="btn-primary">+ New Lead</button>
-        </div>
-      </div>
-
-      {view === 'board' ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto pb-4">
-          {STATUSES.map(status => {
-            const col = leads.filter(l => l.status === status);
-            return (
-              <div key={status} className="min-w-[160px]">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`badge ${STATUS_COLORS[status]}`}>{status}</span>
-                  <span className="text-xs text-stone-400">{col.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {col.map(lead => (
-                    <div
-                      key={lead.id}
-                      onClick={() => setModal(lead)}
-                      className="card cursor-pointer hover:border-blume-300 transition-colors p-3"
-                    >
-                      <p className="font-medium text-sm leading-tight">{lead.couple_name}</p>
-                      {lead.wedding_date && <p className="text-xs text-stone-400 mt-1">{lead.wedding_date}</p>}
-                      {lead.venue && <p className="text-xs text-stone-400 truncate">{lead.venue}</p>}
-                      {lead.contract_value && (
-                        <p className="text-xs text-blume-600 font-medium mt-1">${Number(lead.contract_value).toLocaleString()}</p>
-                      )}
-                      {!lead.last_contact_date || (Date.now() - new Date(lead.last_contact_date).getTime()) / 86400000 >= 3 ? (
-                        !['Booked', 'Lost'].includes(lead.status) && (
-                          <span className="text-xs text-amber-500">⚠ needs follow-up</span>
-                        )
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-widest text-stone-400 border-b border-stone-200 dark:border-stone-700">
-                {['Couple', 'Email', 'Date', 'Venue', 'Source', 'Status', 'Value', 'Last Contact'].map(h => (
-                  <th key={h} className="pb-3 pr-4 font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100 dark:divide-stone-700">
-              {leads.map(l => (
-                <tr key={l.id} onClick={() => setModal(l)} className="cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800/50">
-                  <td className="py-2.5 pr-4 font-medium">{l.couple_name}</td>
-                  <td className="py-2.5 pr-4 text-stone-500">{l.email || '—'}</td>
-                  <td className="py-2.5 pr-4 text-stone-500 font-mono text-xs">{l.wedding_date || '—'}</td>
-                  <td className="py-2.5 pr-4 text-stone-500 max-w-[140px] truncate">{l.venue || '—'}</td>
-                  <td className="py-2.5 pr-4 text-stone-400 text-xs">{l.source}</td>
-                  <td className="py-2.5 pr-4"><span className={`badge ${STATUS_COLORS[l.status]}`}>{l.status}</span></td>
-                  <td className="py-2.5 pr-4 font-mono text-xs">{l.contract_value ? `$${Number(l.contract_value).toLocaleString()}` : '—'}</td>
-                  <td className="py-2.5 text-stone-400 text-xs">{l.last_contact_date ? new Date(l.last_contact_date).toLocaleDateString() : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {modal && (
-        <LeadModal
-          lead={modal === 'new' ? null : modal}
-          onClose={() => setModal(null)}
-          onSave={handleSave}
-          onDelete={handleDelete}
-        />
-      )}
-    </div>
-  );
-}
+  async function
